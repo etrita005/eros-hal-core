@@ -2,8 +2,7 @@
 
 ## 1. 设计目标
 
-HAL（Hardware Abstraction
-Layer）用于屏蔽具体硬件实现差异，为上层系统提供统一、稳定的设备访问与控制接口。
+HAL（Hardware Abstraction Layer）用于屏蔽具体硬件实现差异，为上层系统提供统一、稳定的设备访问与控制接口。
 
 设计目标：
 
@@ -97,11 +96,84 @@ High Level HAL Component 通过组合方式调用多个 Low Level HAL Component�
 
     High Level HAL : Low Level HAL = 1 : N
 
-例如 Lift HAL 可能组合：
+例如 举升HAL 可能组合：
 
 -   Motor HAL
 -   Encoder HAL
 -   LimitSwitch HAL
+
+---
+
+## Low Level HAL Component（低层HAL组件）
+
+### 核心职责
+Low Level HAL Component **直接与硬件交互**，是硬件驱动的封装层。
+
+### 设计原则
+- **硬件相关**：针对具体硬件设备设计
+- **接口标准化**：提供统一的硬件访问接口
+- **不包含业务逻辑**：只负责底层硬件操作
+
+### 主要功能
+1. **设备驱动封装**：封装底层硬件驱动程序
+2. **Fieldbus通讯**：处理现场总线（CAN、EtherCAT、RS485等）通信
+3. **状态读取**：读取硬件设备的状态和传感器数据
+4. **基础控制**：执行基础的硬件控制指令
+
+### 示例组件
+- Motor HAL（电机）
+- Encoder HAL（编码器）
+- GPIO HAL（通用输入输出）
+- Camera HAL（相机）
+
+---
+
+## High Level HAL Component（高层HAL组件）
+
+### 核心职责
+High Level HAL Component **负责设备能力组合与控制逻辑**，通过组合多个Low Level HAL Component来实现更复杂的设备功能。
+
+### 设计原则
+- **不包含业务行为**：只负责设备能力组合，不涉及业务逻辑
+- **能力导向**：暴露设备能力，而非业务语义
+
+### 主要功能
+1. **组件组合**：通过进程内调用组合多个Low Level HAL Component
+2. **协调控制**：协调多个底层组件的工作时序
+3. **内部控制器**：实现PID控制、限幅、安全保护等控制逻辑
+4. **状态聚合**：聚合多个底层组件的状态，提供统一的设备状态
+
+### 示例组合
+例如**举升HAL**可能组合：
+- Motor HAL（电机驱动）
+- Encoder HAL（位置检测）
+- LimitSwitch HAL（限位开关）
+
+### 能力级目标接口示例
+High Level HAL提供的是**能力级目标**，而非业务级目标：
+
+```cpp
+// 正确：能力级目标
+举升HAL.set_target_height(1.0m)      // 设置目标高度
+Motor.set_target_velocity(2.0rad/s)  // 设置目标速度
+Gimbal.set_target_angle(30deg)    // 设置目标角度
+
+// 错误：业务级目标（应在上层实现）
+举升HAL.go_to_floor(3)                // 去3楼
+Robot.start_delivery()             // 开始配送
+```
+
+---
+
+## 关键区别总结
+
+| 维度 | High Level HAL Component | Low Level HAL Component |
+|------|------------------------|-----------------------|
+| **交互对象** | 上层系统 + 低层HAL | 硬件 + Fieldbus |
+| **核心职责** | 设备能力组合与控制逻辑 | 硬件驱动封装与基础控制 |
+| **业务逻辑** | 不包含（能力级） | 不包含 |
+| **组合关系** | 1:N（一个高层组合多个低层） | 被组合者 |
+| **示例** | 举升HAL、底盘HAL | Motor HAL、Encoder HAL、GPIO HAL |
 
 High Level HAL 只负责 **设备能力组合与控制逻辑**，而不是业务行为。
 
