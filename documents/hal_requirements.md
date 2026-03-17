@@ -96,7 +96,7 @@ High Level HAL Component 通过组合方式调用多个 Low Level HAL Component�
 
     High Level HAL : Low Level HAL = 1 : N
 
-例如 举升HAL 可能组合：
+例如 Lift HAL 可能组合：
 
 -   Motor HAL
 -   Encoder HAL
@@ -144,7 +144,7 @@ High Level HAL Component **负责设备能力组合与控制逻辑**，通过组
 4. **状态聚合**：聚合多个底层组件的状态，提供统一的设备状态
 
 ### 示例组合
-例如**举升HAL**可能组合：
+例如**Lift HAL**可能组合：
 - Motor HAL（电机驱动）
 - Encoder HAL（位置检测）
 - LimitSwitch HAL（限位开关）
@@ -154,12 +154,12 @@ High Level HAL提供的是**能力级目标**，而非业务级目标：
 
 ```cpp
 // 正确：能力级目标
-举升HAL.set_target_height(1.0m)      // 设置目标高度
-Motor.set_target_velocity(2.0rad/s)  // 设置目标速度
-Gimbal.set_target_angle(30deg)    // 设置目标角度
+LiftHAL.set_target_height(1.0m)      // 设置目标高度
+MotorHAL.set_target_velocity(2.0rad/s)  // 设置目标速度
+GimbalHAL.set_target_angle(30deg)    // 设置目标角度
 
 // 错误：业务级目标（应在上层实现）
-举升HAL.go_to_floor(3)                // 去3楼
+LiftHAL.go_to_position(3)                // 去3米高度
 Robot.start_delivery()             // 开始配送
 ```
 
@@ -173,7 +173,7 @@ Robot.start_delivery()             // 开始配送
 | **核心职责** | 设备能力组合与控制逻辑 | 硬件驱动封装与基础控制 |
 | **业务逻辑** | 不包含（能力级） | 不包含 |
 | **组合关系** | 1:N（一个高层组合多个低层） | 被组合者 |
-| **示例** | 举升HAL、底盘HAL | Motor HAL、Encoder HAL、GPIO HAL |
+| **示例** | LiftHAL、ChassisHAL | Motor HAL、Encoder HAL、GPIO HAL |
 
 High Level HAL 只负责 **设备能力组合与控制逻辑**，而不是业务行为。
 
@@ -297,7 +297,7 @@ OTA 子状态机只能从 **Inactive** 状态进入，用于管理固件空中�
 | 状态 | 类型 | 说明 | 硬件状态 | 场景示例 |
 |------|------|------|---------|---------|
 | **OTAPreparing** | 中间 | OTA 准备阶段：进入 OTA 模式、备份配置、准备升级环境 | 初始化完成，无动力 | 关闭无关服务、挂载升级分区 |
-| **OTADownloading** | 中间 | 固件文件下载进行中 | 初始化完成，无动力 | 通过 HTTP/HTTPS 或本地传输下载固件 |
+| **OTADownloading** | 中间 | 固件文件下载进行中 | 初始化完成，无动力 | 通过总线传输下载固件 |
 | **OTAValidating** | 中间 | 固件校验：CRC 校验、签名验证、版本兼容性检查 | 初始化完成，无动力 | 验证固件完整性与合法性 |
 | **OTAUpdating** | 中间 | 固件刷写/升级进行中 | 初始化完成，无动力 | 写入 Flash、更新 Bootloader 配置 |
 | **OTARestarting** | 中间 | 设备重启并验证新固件 | 重启中 | 重启设备、新固件自检 |
@@ -518,7 +518,7 @@ HAL 不应该实现业务行为，例如：
 
 错误示例（不推荐）：
 
-    Lift.go_to_floor(3)
+    Lift.go_to_position(3)
     Robot.start_delivery()
     Dock.auto_dock()
 
